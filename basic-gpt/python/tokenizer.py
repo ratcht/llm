@@ -26,11 +26,11 @@ if __name__ == "__main__":
 
   ds = load_dataset("Salesforce/wikitext", "wikitext-2-raw-v1")
 
-  tokenizer = Tokenizer("toy-gpt/python/vocab.json")
+  tokenizer = Tokenizer("basic-gpt/python/vocab.json")
 
   tokenized = ds.map(
     lambda x: {"ids": tokenizer.encode(x["text"])},
     batched=False
   )
 
-  tokenized.save_to_disk("tokenized-wikitext-2") # type: ignore
+  tokenized.save_to_disk("datasets/tokenized-wikitext-2") # type: ignore
