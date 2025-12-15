@@ -4,13 +4,15 @@ import torch.nn.functional as F
 
 torch.manual_seed(142)
 
-batch_size, block_size, vocab_size = 4, 8, 32
 
 def toy_self_attention(x: torch.Tensor):
+  B, T, C = x.shape
+
+
   tril = torch.tril(
-    torch.ones(block_size, block_size)
+    torch.ones(T, T)
   )
-  w = torch.zeros((block_size, block_size))
+  w = torch.zeros((T, T))
   w = w.masked_fill(
     tril == 0, float('-inf')
   )
@@ -19,37 +21,62 @@ def toy_self_attention(x: torch.Tensor):
 
   return out
 
-class SelfAttentionHead(nn.Module):
-  def __init__(self, head_size: int = 16):
+class SelfAttention(nn.Module):
+  def __init__(self, n_embeddings: int, block_size: int, head_size: int, dropout: float = 0.5):
     super().__init__()
+    self.block_size = block_size
+    self.n_embeddings = n_embeddings
+    self.head_size = head_size
 
-    self.Q = nn.Linear(vocab_size, head_size, bias=False)
-    self.K = nn.Linear(vocab_size, head_size, bias=False)
-    self.V = nn.Linear(vocab_size, head_size, bias=False)
+    self.query = nn.Linear(n_embeddings, head_size, bias=False)
+    self.key = nn.Linear(n_embeddings, head_size, bias=False)
+    self.value = nn.Linear(n_embeddings, head_size, bias=False)
+
+    self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+
+    self.dropout = nn.Dropout(dropout)
+
 
   def forward(self, x: torch.Tensor):
-    q = self.Q(x) # (batch, block, head_size)
-    k = self.K(x) # (batch, block, head_size)
-    v = self.V(x)
+    B, T, C = x.shape
 
-    w = q @ k.transpose(-2, -1) # (batch, block, head_size) @ (batch, head_size, block) -> (batch, block, block)
+    q = self.query(x) # (batch, block, head_size)
+    k = self.key(x) # (batch, block, head_size)
+    v = self.value(x)
 
-    tril = torch.tril(
-      torch.ones(block_size, block_size)
-    )
+    w = q @ k.transpose(-2, -1) * C**-0.5 # (batch, block, head_size) @ (batch, head_size, block) -> (batch, block, block)
+
     w = w.masked_fill(
-      tril == 0, float('-inf')
+      self.tril[:T, :T] == 0, float('-inf') # type: ignore
     )
     w = F.softmax(w, dim=-1)
-
-    print(w[0])
+    w = self.dropout(w)
 
     out = w @ v
 
     return out
 
-if __name__ == "__main__":
-  x = torch.randn((batch_size, block_size, vocab_size))
+class MultiHeadAttention(nn.Module):
+  def __init__(self, num_heads, n_embeddings, block_size, head_size, dropout=0.5):
+    super().__init__()
 
-  attention = SelfAttentionHead(16)
+    self.heads = nn.ModuleList([
+      SelfAttention(n_embeddings, block_size, head_size, dropout=dropout) for _ in range(num_heads)
+    ])
+    self.proj = nn.Linear(n_embeddings, n_embeddings)
+    self.dropout = nn.Dropout(dropout)
+
+  def forward(self, x):
+    out = torch.cat([h(x) for h in self.heads], -1)
+    out = self.proj(out)
+    out = self.dropout(out)
+    return out
+
+
+if __name__ == "__main__":
+  batch_size, block_size, n_embeddings = 4, 8, 32
+
+  x = torch.randn((batch_size, block_size, n_embeddings))
+
+  attention = SelfAttention(n_embeddings, block_size, head_size=16)
   print(attention(x))
