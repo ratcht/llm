@@ -73,3 +73,21 @@ xbow3 = w @ x # (T, T) @ (B, T, C) -> (B, T, T) @ (B, T, C) --> (B, T, C)
 print(w)
 print(xbow3[0])
 print(torch.allclose(xbow2, xbow3, atol=1e-5))
+
+# %%
+
+def toy_self_attention(x: torch.Tensor):
+  B, T, C = x.shape
+
+
+  tril = torch.tril(
+    torch.ones(T, T)
+  )
+  w = torch.zeros((T, T))
+  w = w.masked_fill(
+    tril == 0, float('-inf')
+  )
+  w = F.softmax(w, dim=-1)
+  out = w @ x
+
+  return out

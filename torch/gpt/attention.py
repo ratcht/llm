@@ -4,23 +4,6 @@ import torch.nn.functional as F
 
 torch.manual_seed(142)
 
-
-def toy_self_attention(x: torch.Tensor):
-  B, T, C = x.shape
-
-
-  tril = torch.tril(
-    torch.ones(T, T)
-  )
-  w = torch.zeros((T, T))
-  w = w.masked_fill(
-    tril == 0, float('-inf')
-  )
-  w = F.softmax(w, dim=-1)
-  out = w @ x
-
-  return out
-
 class SelfAttention(nn.Module):
   def __init__(self, n_embeddings: int, block_size: int, head_size: int, dropout: float = 0.5):
     super().__init__()
