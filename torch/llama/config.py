@@ -5,12 +5,13 @@ import torch
 
 @dataclass
 class ModelConfig:
-  vocab_size: int
-  n_embd=384
-  n_head=6
-  n_layer=6
-  block_size=256
-  dropout=0.2
+  vocab_size: int = 32000
+  embed_dim: int = 4096
+  hidden_dim: int = 11008
+  num_heads: int = 32
+  num_blocks: int = 32
+  max_seq_len: int = 2048
+  dropout: float = 0.0
 
 @dataclass
 class TrainingConfig:
