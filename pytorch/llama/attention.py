@@ -1,11 +1,11 @@
 from typing import Annotated
 
-import torch.nn as nn
-import torch.nn.functional as F
+import pytorch.nn as nn
+import pytorch.nn.functional as F
 from embedding import RoPE
 from layers import Dropout, Linear
 
-import torch as t
+import pytorch as t
 
 
 class MultiHeadAttention(nn.Module):

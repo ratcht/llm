@@ -6,20 +6,20 @@ Complete implementations of large language models including all sub-components.
 ## Repository Structure
 
 ```
-torch/
+pytorch/
 ├── gpt/               # GPT-1 style implementation
 └── llama/             # LLaMA-1/2 implementation
 ```
 
 ## What's Implemented
 
-**GPT** (`torch/gpt/`):
+**GPT** (`pytorch/gpt/`):
 - Multi-head self-attention with causal masking
 - Learned positional embeddings
 - LayerNorm, feedforward blocks
 - Training loop with loss estimation
 
-**LLaMA** (`torch/llama/`):
+**LLaMA** (`pytorch/llama/`):
 - Multi-head attention with Rotary Position Embeddings (RoPE)
 - RMSNorm (instead of LayerNorm)
 - SwiGLU feedforward network
@@ -30,13 +30,13 @@ torch/
 
 **GPT:**
 ```bash
-cd torch/gpt
+cd pytorch/gpt
 python train.py
 ```
 
 **LLaMA:**
 ```bash
-cd torch/llama
+cd pytorch/llama
 python generate.py
 ```
 
