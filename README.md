@@ -1,25 +1,29 @@
 # LLM
 
-Complete implementations of large language models including all sub-components.
+Complete implementations of large language models including all sub-components. Also includes training/fine-tuning implementations (i.e LoRA, QLoRA).
 
 
 ## Repository Structure
 
 ```
-pytorch/
+finetuning/
+├── lora/              # LoRA implementation & intuition
+└── qlora/             # QLoRA implementation & intuition
+
+models/
 ├── gpt/               # GPT-1 style implementation
 └── llama/             # LLaMA-1/2 implementation
 ```
 
 ## What's Implemented
 
-**GPT** (`pytorch/gpt/`):
+**GPT** (`models/gpt/`):
 - Multi-head self-attention with causal masking
 - Learned positional embeddings
 - LayerNorm, feedforward blocks
 - Training loop with loss estimation
 
-**LLaMA** (`pytorch/llama/`):
+**LLaMA** (`models/llama/`):
 - Multi-head attention with Rotary Position Embeddings (RoPE)
 - RMSNorm (instead of LayerNorm)
 - SwiGLU feedforward network
@@ -30,13 +34,13 @@ pytorch/
 
 **GPT:**
 ```bash
-cd pytorch/gpt
+cd models/gpt
 python train.py
 ```
 
 **LLaMA:**
 ```bash
-cd pytorch/llama
+cd models/llama
 python generate.py
 ```
 
