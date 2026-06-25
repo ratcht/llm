@@ -11,6 +11,7 @@ class ModelConfig:
   num_heads: int = 32
   num_blocks: int = 32
   max_seq_len: int = 2048
+  max_batch_size: int = 32
   dropout: float = 0.0
 
 @dataclass

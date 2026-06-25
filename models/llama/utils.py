@@ -3,6 +3,7 @@ import pandas as pd
 from IPython.display import display
 
 
+# Credit: ARENA_3.0 Notebook for utils
 def print_param_count(
   *models, display_df=True, use_state_dict=False, display_max_rows=None, filename: str | None = None
 ):

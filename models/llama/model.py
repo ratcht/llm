@@ -15,14 +15,14 @@ class LlamaModel(nn.Module):
     self.config = config
     self.embed_tokens = Embedding(config.vocab_size, config.embed_dim)
     self.layers = nn.ModuleList([
-      Block(config.embed_dim, config.hidden_dim, config.num_heads, config.dropout) for _ in range(config.num_blocks)
+      Block(config.embed_dim, config.hidden_dim, config.num_heads, config.max_batch_size, config.max_seq_len, config.dropout) for _ in range(config.num_blocks)
     ])
     self.norm = RMSNorm((config.embed_dim,))
 
-  def forward(self, x):
+  def forward(self, x, start_pos: int):
     x = self.embed_tokens(x)
     for layer in self.layers:
-      x = layer(x)
+      x = layer(x, start_pos)
     x = self.norm(x)
     return x
 
@@ -34,10 +34,14 @@ class Llama(nn.Module):
     self.model = LlamaModel(config)
     self.lm_head = Linear(config.embed_dim, config.vocab_size, bias=False)
 
-  def forward(self, idx, targets=None):
+  def reset_cache(self):
+    for layer in self.model.layers:
+      layer.self_attn.reset_cache()
+
+  def forward(self, idx, start_pos: int = 0, targets=None):
     batch_size, block_size = idx.shape
 
-    x = self.model(idx)
+    x = self.model(idx, start_pos)
     logits = self.lm_head(x)
 
     if targets is not None:
@@ -52,23 +56,25 @@ class Llama(nn.Module):
   @t.no_grad()
   def generate(self, idx: t.Tensor, max_new_tokens=100, temperature=0.7, top_p=0.9, eos_token_id=None, stream=None):
     idx = idx.to(next(self.parameters()).device)
+    prompt_len = idx.size(1)
 
-    for _ in range(max_new_tokens):
-      # forward pass (truncate to max_seq_len)
-      logits, _ = self(idx[:, -self.config.max_seq_len:])
-      logits = logits[:, -1, :] / temperature
+    self.reset_cache()
 
-      # top-p sampling: only keep tokens with cumulative prob < top_p
+    # prefill: process entire prompt
+    logits, _ = self(idx, start_pos=0)
+    logits = logits[:, -1, :] / temperature
+
+    for cur_pos in range(prompt_len, prompt_len + max_new_tokens):
+
+      # top-p sampling
       sorted_logits, sorted_indices = t.sort(logits, descending=True)
       probs = F.softmax(sorted_logits, dim=-1)
       cumulative_probs = t.cumsum(probs, dim=-1)
 
-      # mark tokens to remove (cumulative prob exceeds top_p)
       sorted_mask = cumulative_probs > top_p
       sorted_mask[:, 1:] = sorted_mask[:, :-1].clone()
       sorted_mask[:, 0] = False
 
-      # scatter mask back to original order and apply
       mask = sorted_mask.scatter(1, sorted_indices, sorted_mask)
       logits[mask] = float('-inf')
 
@@ -77,13 +83,15 @@ class Llama(nn.Module):
       idx_next = t.multinomial(probs, num_samples=1)
       idx = t.cat((idx, idx_next), dim=1)
 
-      # stream callback
       if stream:
         stream(idx_next.item())
 
-      # stop on eos
       if eos_token_id and idx_next.item() == eos_token_id:
         break
+
+      # decode: process only new token
+      logits, _ = self(idx_next, start_pos=cur_pos)
+      logits = logits[:, -1, :] / temperature
 
     return idx
 

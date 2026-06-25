@@ -6,6 +6,7 @@ import torch as t
 
 
 def load_model(device="cuda:1"):
+	# load the weights from hf
   ref_model = LlamaForCausalLM.from_pretrained("meta-llama/Llama-2-7b-hf", dtype=t.float16, device_map=device)
 
   model = Llama(ModelConfig())

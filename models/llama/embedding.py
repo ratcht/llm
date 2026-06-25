@@ -39,12 +39,12 @@ class RoPE(nn.Module):
     self.register_buffer("cos_cached", emb.cos())
     self.register_buffer("sin_cached", emb.sin())
 
-  def forward(self, x):
+  def forward(self, x, start_pos: int = 0):
     *_, L, D = x.shape
     assert D == self.dim
 
-    cos = self.cos_cached[:L, :]
-    sin = self.sin_cached[:L, :]
+    cos = self.cos_cached[start_pos : start_pos + L, :]
+    sin = self.sin_cached[start_pos : start_pos + L, :]
 
     assert cos.shape == sin.shape == (L, D)
 
