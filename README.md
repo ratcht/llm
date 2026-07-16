@@ -8,11 +8,14 @@ Complete implementations of large language models including all sub-components. 
 ```
 finetuning/
 ├── lora/              # LoRA implementation & intuition
-└── qlora/             # QLoRA implementation & intuition
+└── qlora/             # (WiP): QLoRA implementation & intuition
 
 models/
 ├── gpt/               # GPT-1 style implementation
 └── llama/             # LLaMA-1/2 implementation
+
+speculative-decoding/
+└── qwen.ipynb         # Speculative decoding for Qwen2.5 with basic setup
 ```
 
 ## What's Implemented
